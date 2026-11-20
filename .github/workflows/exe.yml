@@ -1,0 +1,36 @@
+name: Construir instalador .exe
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Etiqueta de la release (p. ej. v0.9)
+        required: true
+permissions:
+  contents: write
+jobs:
+  exe:
+    runs-on: windows-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - name: Descargar el zip del parche de la release
+        shell: bash
+        run: |
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern 'SRWV-ES_*_parche.zip' --dir dl
+          7z x dl/SRWV-ES_*_parche.zip -odata
+      - name: Compilar
+        shell: bash
+        run: |
+          pip install pyinstaller zstandard
+          cp instalar_parche.py data/
+          cd data
+          pyinstaller --onefile --console --name SRWV-ES_Instalador --add-data "manifest.json;." --add-data "patches;patches" instalar_parche.py
+      - name: Adjuntar a la release
+        shell: bash
+        run: gh release upload "$TAG" data/dist/SRWV-ES_Instalador.exe --clobber --repo "$GITHUB_REPOSITORY"

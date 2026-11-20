@@ -7,7 +7,7 @@ Uso:
 Antes de tocar nada hace copia de cada fichero en <juego>/_backup_traduccion_es/.
 Si algún fichero no coincide con el original de Steam, lo salta y te lo dice."""
 import os,sys,json,hashlib,shutil,subprocess,tempfile
-AQUI=os.path.dirname(os.path.abspath(__file__))
+AQUI=getattr(sys,'_MEIPASS',None) or os.path.dirname(os.path.abspath(__file__))  # _MEIPASS: versión .exe
 def sha(p):
     h=hashlib.sha256()
     with open(p,'rb') as f:
@@ -68,4 +68,7 @@ def main():
             if os.path.exists(tmp): os.remove(tmp)
     print('\nAplicados: %d · ya estaban: %d · omitidos/errores: %d'%(ok,ya,salt))
     print('Copia de seguridad en: '+bk)
-if __name__=='__main__': main()
+if __name__=='__main__':
+    try: main()
+    finally:
+        if getattr(sys,'frozen',False): input('\nPulsa Intro para cerrar...')
